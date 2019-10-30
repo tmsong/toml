@@ -190,6 +190,10 @@ func (md *MetaData) unify(data interface{}, rv reflect.Value) error {
 	// all kinds of values and produce an incorrect error whenever those values
 	// are hashes or arrays (including arrays of tables).
 
+	if rv.Type().String() == "time.Duration" {
+		return md.unifyDuration(data, rv)
+	}
+
 	k := rv.Kind()
 
 	// laziness
@@ -377,6 +381,18 @@ func (md *MetaData) unifyFloat64(data interface{}, rv reflect.Value) error {
 		return nil
 	}
 	return badtype("float", data)
+}
+
+func (md *MetaData) unifyDuration(data interface{}, rv reflect.Value) error {
+	if s, ok := data.(string); ok {
+		if d, err := time.ParseDuration(s); err == nil {
+			rv.SetInt(int64(d))
+			return nil
+		} else {
+			return err
+		}
+	}
+	return badtype("time.Duration", data)
 }
 
 func (md *MetaData) unifyInt(data interface{}, rv reflect.Value) error {
